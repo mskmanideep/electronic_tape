@@ -1,0 +1,102 @@
+/* C code to use in AVR studio to work on ATMEGA16 microcontroller */
+/* Following code is used to design electronic way of mensuration using ir sensors */
+#define F_CPU 1000000ul
+#include <avr/io.h>
+#include <util/delay.h>
+void lcd_init();
+void lcd_cmd(int);
+void lcd_data(int);
+void lcd_num(int);
+void lcd_str(char *str);
+void lcd_str(char *str)
+{
+	int i=0;
+	while(str[i]!='\0')
+	{
+		lcd_data(str[i]);
+		i++;
+	}
+}
+
+void lcd_init()
+{
+	lcd_cmd(0x02);
+	lcd_cmd(0x28);
+	lcd_cmd(0x0C);
+	lcd_cmd(0x06);
+}
+void lcd_cmd(int c)
+{
+	PORTA = (c&0xF0)|0x04;
+	_delay_ms(1);
+	PORTA = PORTA-0x04;
+	PORTA = ((c<<4)&0xF0)|0x04;
+	_delay_ms(1);
+	PORTA = PORTA-0x04;
+}
+void lcd_data(int d)
+{
+	PORTA = (d&0xF0)|0x05;
+	_delay_ms(1);
+	PORTA = PORTA-0x04;
+	PORTA = ((d<<4)&0xF0)|0x05;
+	_delay_ms(1);
+	PORTA = PORTA-0x04;
+}
+void lcd_num(int n)
+{
+	int a=0,b=0;
+	lcd_cmd(0x04);
+	
+	if(n==0)
+	{
+		lcd_data(48);
+		lcd_data(48);
+	}
+	else
+	{
+		while(n!='\0')
+		{
+			a=n%10;
+			b=n/10;
+			lcd_data(a+48);
+			
+			n=n/10;
+			
+		}
+		
+		lcd_cmd(0X06);
+	}
+	lcd_cmd(0X06);
+}
+
+int main(void)
+{ DDRA=0XFF;DDRC=0XFE;DDRB=0XFB;DDRD=0XFD;lcd_init();int c=0,v=0,L=2,i=0,q=0,m=0;PORTB=0x04;PORTC=0X01;
+	lcd_cmd(0X01);_delay_ms(10);lcd_cmd(0x81);lcd_str("  MES PROJECT   ");_delay_ms(1000);
+   while(1)
+   { if (PINB==0X00 && q==0){while(PINB==0X00);L=1;q=1;lcd_cmd(0xC0);lcd_str("  Measuring... ");_delay_ms(10); }
+	 if (PINB==0X00 && q==1){while(PINB==0X00);L=0;q=0;}
+     if (PINC==0X00){while(PINC==0X00);m=1;}
+	       if (L==1 && q==1)
+	       {   
+			   if (PIND==0x02)
+			   {
+				   while (PIND==0x02){}
+					  lcd_cmd(0X01);_delay_ms(10); c=c+1; lcd_cmd(0x85);_delay_ms(10);lcd_num(c);_delay_ms(10);
+					  lcd_cmd(0xC0);lcd_str("  Measuring... ");_delay_ms(10);
+			   }
+			 
+	       }
+         if(L==0)	   
+         { v=c*0.75;lcd_cmd(0X01);_delay_ms(10);
+			 lcd_cmd(0x80);lcd_str("  Length is  ");_delay_ms(10);lcd_cmd(0xC5);_delay_ms(10);lcd_num(v);
+			 lcd_cmd(0xC7);lcd_str("cm");_delay_ms(10);_delay_ms(1000);}
+			 if(m==1){
+			i = v/2.5;m=0;lcd_cmd(0X01);_delay_ms(10);lcd_cmd(0x80);lcd_str("Length is");_delay_ms(10);lcd_cmd(0x8B);_delay_ms(10);lcd_num(v);
+			lcd_cmd(0x8D);lcd_str("cm");_delay_ms(10);
+			lcd_cmd(0xC0);lcd_str("Length is");_delay_ms(10);lcd_cmd(0xCB);_delay_ms(10);lcd_num(i);
+			lcd_cmd(0xCD);lcd_str("inch");_delay_ms(10);
+			_delay_ms(2000);
+			 }
+	   }  
+	   }
